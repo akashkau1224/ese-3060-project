@@ -196,8 +196,9 @@ class Block(nn.Module):
 class GPTConfig:
     vocab_size : int = 50304
     n_layer : int = 12
-    n_head : int = 6 # head dim 128 suggested by @Grad62304977
+    n_head : int = 6
     n_embd : int = 768
+    expansion_factor : int = 4
 
 class GPT(nn.Module):
 
@@ -317,8 +318,8 @@ class DistributedDataLoader:
 @dataclass
 class Hyperparameters:
     # data hyperparams
-    input_bin : str = 'data/fineweb10B/fineweb_train_*.bin' # input .bin to train on
-    input_val_bin : str = 'data/fineweb10B/fineweb_val_*.bin' # input .bin to eval validation loss on
+    input_bin : str = '../fineweb10B/fineweb_train_*.bin' # input .bin to train on
+    input_val_bin : str = '../fineweb10B/fineweb_val_*.bin' # input .bin to eval validation loss on
     # optimization hyperparams
     batch_size : int = 8*64 # batch size, in sequences, across all devices
     device_batch_size : int = 64 # batch size, in sequences, per device
@@ -374,7 +375,7 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
     x, y = train_loader.next_batch()
 
     # Initialize model
-    model = GPT(GPTConfig(vocab_size=args.vocab_size, n_layer=args.n_layer, n_head=args.n_head, n_embd=args.n_embd))
+    model = GPT(GPTConfig(vocab_size=args.vocab_size, n_layer=args.n_layer, n_head=args.n_head, n_embd=args.n_embd, expansion_factor=args.expansion_factor))
     model = model.cuda()
     if hasattr(config, "coordinate_descent_tuning"):
         config.coordinate_descent_tuning = True # suggested by @Chillee
@@ -465,8 +466,8 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
             if master_process:
                 print(f'step:{step}/{args.num_iterations} val_loss:{val_loss:.4f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/(timed_steps-1):.2f}ms')
                 if last_step:
-                with open(logfile, "a") as f:
-                    f.write(f'step:{step}/{args.num_iterations} val_loss:{val_loss:.4f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/(timed_steps-1):.2f}ms\n')
+                    with open(logfile, "a") as f:
+                        f.write(f'step:{step}/{args.num_iterations} val_loss:{val_loss:.4f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/(timed_steps-1):.2f}ms\n')
             # start the clock again
             torch.cuda.synchronize()
             t0 = time.time()
