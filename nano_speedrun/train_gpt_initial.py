@@ -264,7 +264,7 @@ def _load_data_shard(filename):
         assert header[1] == 1, "unsupported version"
         ntok = header[2] # number of tokens (claimed)
         # the rest of it are tokens, stored as uint16
-        tokens = np.frombuffer(f.read(200000), dtype=np.uint16)
+        tokens = np.frombuffer(f.read(300000), dtype=np.uint16)
     # assert len(tokens) == ntok, "number of tokens read does not match header?"
     return tokens
 
@@ -341,8 +341,9 @@ class Hyperparameters:
 
     expansion_factor : int = 4
 
+
 def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int, ddp_world_size: int, 
-                      master_process: bool, run_id: str = None):
+                      master_process: bool, run_id: str = None, should_log: bool = True):
     """
     Run a complete training and testing cycle.
     
@@ -409,7 +410,7 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
     logfile = None
     if run_id is None:
         run_id = str(uuid.uuid4()) if master_process else None
-    if master_process:
+    if master_process and should_log:
         logdir = 'logs/%s/' % run_id
         os.makedirs(logdir, exist_ok=True)
         logfile = 'logs/%s.txt' % run_id
@@ -463,7 +464,7 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
             val_loss /= val_steps
             final_val_loss = val_loss.item() if last_step else final_val_loss
             # log val loss to console and to logfile
-            if master_process:
+            if master_process and should_log == True:
                 print(f'step:{step}/{args.num_iterations} val_loss:{val_loss:.4f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/(timed_steps-1):.2f}ms')
                 if last_step:
                     with open(logfile, "a") as f:
@@ -472,7 +473,7 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
             torch.cuda.synchronize()
             t0 = time.time()
 
-        if master_process and (last_step or (args.save_every > 0 and step % args.save_every == 0)):
+        if master_process and should_log and (last_step or (args.save_every > 0 and step % args.save_every == 0)):
             # stop the clock
             torch.cuda.synchronize()
             training_time_ms += 1000 * (time.time() - t0)
@@ -517,7 +518,7 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
         # everything that follows now is just diagnostics, prints, logging, etc.
 
         #dist.all_reduce(train_loss, op=dist.ReduceOp.AVG) # all-reducing the training loss would be more correct in terms of logging, but slower
-        if master_process:
+        if master_process and should_log:
             approx_time = training_time_ms + 1000 * (time.time() - t0)
             print(f"step:{step+1}/{args.num_iterations} train_loss:{train_loss.item():.4f} train_time:{approx_time:.0f}ms step_avg:{approx_time/timed_steps:.2f}ms")
             with open(logfile, "a") as f:
@@ -525,15 +526,20 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
 
     # Collect results
     peak_memory_mib = torch.cuda.max_memory_allocated() // 1024 // 1024
-    if master_process:
+    if master_process and should_log:
         print(f"peak memory consumption: {peak_memory_mib} MiB")
     
     results = {
         'final_val_loss': final_val_loss,
         'training_time_ms': training_time_ms,
         'peak_memory_mib': peak_memory_mib,
-        'run_id': run_id if master_process else None
+        'run_id': run_id if master_process else None,
+        'expansion_factor': args.expansion_factor
     }
+
+    if master_process and should_log:
+        with open(logfile, "a") as f:
+            f.write(f"\n\n==============================================\nFinal Results for run_id: {run_id}, expansion_factor: {args.expansion_factor}, final_val_loss: {final_val_loss}, training_time_ms: {training_time_ms}, peak_memory_mib: {peak_memory_mib}\n==============================================\n\n")
     
     return results
 
@@ -551,28 +557,63 @@ master_process = (ddp_rank == 0) # this process will do logging, checkpointing e
 # Single test
 # args = Hyperparameters()
 # results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
+# Not logging individual test results for initial testing
 
+initial_test_log = "/logs/initial_testing.txt"
+with open(initial_test_log, "w") as f:
+    f.write(f"Initial testing log\n")
+    f.write(f"==============================================\n")
+    f.write(f"Running pytorch {torch.version.__version__} compiled for CUDA {torch.version.cuda}\nnvidia-smi:\n")
+    import subprocess
+    result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    f.write(f'{result.stdout}\n')
+    f.write('='*100 + '\n\n')
+    f.write(f"==============================================\n")
+    f.write(f"Testing extreme examples of expansion factors\n")
+    f.write(f"==============================================\n")
 # Extreme examples to test timing of training a model with different expansion factors
-for i in [1.5, 2.0, 2.5, 6.0, 7.0, 8.0, 10.0]:
+for i in [1.5, 2.0, 2.5, 6.0, 7.0]:
     args = Hyperparameters(expansion_factor=i)
-    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
+    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=False)
     print(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
+    with open(initial_test_log, "a") as f:
+        f.write(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
 
+
+with open(initial_test_log, "a") as f:
+    f.write(f"==============================================\n")
+    f.write(f"Testing expansion factor 3.5\n")
+    f.write(f"==============================================\n")
 
 # Testing for consistency of training time for 3.5 expansion factor vs 4.0 expansion factor
 total_time = 0
+total_val_loss = 0.0
 for i in range(5):
     args = Hyperparameters(expansion_factor=3.5)
-    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
+    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=False)
     total_time += results['training_time_ms']
+    total_val_loss += results['final_val_loss']
     print(f"Test {i+1} with expansion factor 3.5 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
-print(f"Average time for 3.5 expansion factor: {total_time/10:.0f}ms")
+    with open(initial_test_log, "a") as f:
+        f.write(f"Test {i+1} with expansion factor 3.5 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
+print(f"3.5 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
+with open(initial_test_log, "a") as f:
+    f.write(f"3.5 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
 
-
+with open(initial_test_log, "a") as f:
+    f.write(f"==============================================\n")
+    f.write(f"Testing expansion factor 4.0\n")
+    f.write(f"==============================================\n")
 total_time = 0
+total_val_loss = 0.0
 for i in range(5):
     args = Hyperparameters(expansion_factor=4.0)
-    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
+    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=False)
     total_time += results['training_time_ms']
+    total_val_loss += results['final_val_loss']
     print(f"Test {i+1} with expansion factor 4.0 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
-print(f"Average time for 4.0 expansion factor: {total_time/10:.0f}ms")
+    with open(initial_test_log, "a") as f:
+        f.write(f"Test {i+1} with expansion factor 4.0 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
+print(f"4.0 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
+with open(initial_test_log, "a") as f:
+    f.write(f"4.0 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
