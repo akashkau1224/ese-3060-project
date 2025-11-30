@@ -1,20 +1,21 @@
 Initial testing log
-
 ==============================================
-
-Running pytorch 2.8.0+cu128 compiled for CUDA 12.8
+Running pytorch 2.8.0+cu128 compiled for CUDA 12.4
 nvidia-smi:
-
 Sat Nov 29 20:33:16 2025
 +-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 565.57.01              Driver Version: 565.57.01      CUDA Version: 12.7     |
+| NVIDIA-SMI 550.127.08             Driver Version: 550.127.08     CUDA Version: 12.4     |
 |-----------------------------------------+------------------------+----------------------+
 | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
-|   0  NVIDIA L40                     On  |   00000000:C1:00.0 Off |                    0 |
-| N/A   30C    P0             53W /  300W |     433MiB /  46068MiB |      0%      Default |
+|   0  NVIDIA L40                     On  |   00000000:81:00.0 Off |                    0 |
+| N/A   30C    P0             71W /  300W |     433MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA L40                     On  |   00000000:C1:00.0 Off |                    0 |
+| N/A   30C    P0             63W /  300W |     433MiB /  46068MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -25,58 +26,31 @@ Sat Nov 29 20:33:16 2025
 |=========================================================================================|
 +-----------------------------------------------------------------------------------------+
 
-
 ====================================================================================================
 
-
 ==============================================
-
 Testing extreme examples of expansion factors
-
 ==============================================
-
 Test with expansion factor 1.5 completed: final_val_loss=6.8175, training_time=202753ms
-
 Test with expansion factor 2.0 completed: final_val_loss=6.7735, training_time=214992ms
-
 Test with expansion factor 2.5 completed: final_val_loss=6.7585, training_time=226770ms
-
 Test with expansion factor 6.0 completed: final_val_loss=6.6943, training_time=319716ms
-
 Test with expansion factor 7.0 completed: final_val_loss=6.6862, training_time=339960ms
-
 ==============================================
-
 Testing expansion factor 3.5
-
 ==============================================
-
 Test 1 with expansion factor 3.5 completed: final_val_loss=6.7256, training_time=252592ms
-
 Test 2 with expansion factor 3.5 completed: final_val_loss=6.7203, training_time=253436ms
-
 Test 3 with expansion factor 3.5 completed: final_val_loss=6.7271, training_time=253314ms
-
 Test 4 with expansion factor 3.5 completed: final_val_loss=6.7147, training_time=253048ms
-
 Test 5 with expansion factor 3.5 completed: final_val_loss=6.7177, training_time=253218ms
-
 3.5 expansion factor averages; Time to train 100 iterations: Time to train 100 iterations: 253122ms, Final validation loss: 6.7211
-
 ==============================================
-
 Testing expansion factor 4.0
-
 ==============================================
-
 Test 1 with expansion factor 4.0 completed: final_val_loss=6.7127, training_time=265819ms
-
 Test 2 with expansion factor 4.0 completed: final_val_loss=6.7130, training_time=266299ms
-
 Test 3 with expansion factor 4.0 completed: final_val_loss=6.7070, training_time=266385ms
-
 Test 4 with expansion factor 4.0 completed: final_val_loss=6.7101, training_time=266416ms
-
 Test 5 with expansion factor 4.0 completed: final_val_loss=6.7070, training_time=266278ms
-
 4.0 expansion factor averages; Time to train 100 iterations: Time to train 100 iterations: 266239ms, Final validation loss: 6.7100

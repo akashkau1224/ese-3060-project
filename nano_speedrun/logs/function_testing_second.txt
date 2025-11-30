@@ -1,0 +1,55 @@
+More graunuar testing with custom functionlog
+==============================================
+Running pytorch 2.8.0+cu128 compiled for CUDA 12.8
+nvidia-smi:
+Sat Nov 29 22:37:34 2025
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.127.08             Driver Version: 550.127.08     CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L40                     On  |   00000000:01:00.0 Off |                    0 |
+| N/A   28C    P0             71W /  300W |     433MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA L40                     On  |   00000000:61:00.0 Off |                    0 |
+| N/A   26C    P0             64W /  300W |     433MiB /  46068MiB |      2%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
++-----------------------------------------------------------------------------------------+
+
+====================================================================================================
+
+==============================================
+Testing expansion factors
+==============================================
+Test with expansion factor 3.0 completed: final_val_loss=6.7367, training_time=241604ms
+Function value for expansion factor 3.0: 2.2746
+Test with expansion factor 3.1 completed: final_val_loss=6.7299, training_time=245409ms
+Function value for expansion factor 3.1: 2.2742
+Test with expansion factor 3.2 completed: final_val_loss=6.7326, training_time=252541ms
+Function value for expansion factor 3.2: 2.2756
+Test with expansion factor 3.3 completed: final_val_loss=6.7301, training_time=309587ms
+Function value for expansion factor 3.3: 2.2824
+Test with expansion factor 3.4 completed: final_val_loss=6.7223, training_time=272187ms
+Function value for expansion factor 3.4: 2.2767
+Test with expansion factor 3.5 completed: final_val_loss=6.7290, training_time=251328ms
+Function value for expansion factor 3.5: 2.2749
+Test with expansion factor 3.6 completed: final_val_loss=6.7169, training_time=268427ms
+Function value for expansion factor 3.6: 2.2755
+Test with expansion factor 3.7 completed: final_val_loss=6.7212, training_time=266163ms
+Function value for expansion factor 3.7: 2.2758
+Test with expansion factor 3.8 completed: final_val_loss=6.7158, training_time=263320ms
+Function value for expansion factor 3.8: 2.2746
+Test with expansion factor 3.9 completed: final_val_loss=6.7173, training_time=274413ms
+Function value for expansion factor 3.9: 2.2763
+Test with expansion factor 4.0 completed: final_val_loss=6.7111, training_time=268871ms
+Function value for expansion factor 4.0: 2.2747

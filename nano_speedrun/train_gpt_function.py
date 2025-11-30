@@ -556,7 +556,7 @@ print(f"using device: {device}")
 master_process = (ddp_rank == 0) # this process will do logging, checkpointing etc.
 
 def function(validation_loss: float, training_time: float) -> float:
-    return (0.9 * math.log(validation_loss) + 0.1 * math.log(training_time))
+    return (0.965 * math.log(validation_loss) + 0.035 * math.log(training_time))
 # Single test
 # args = Hyperparameters()
 # results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
@@ -572,7 +572,7 @@ with open(initial_test_log, "w") as f:
     f.write(f'{result.stdout}\n')
     f.write('='*100 + '\n\n')
     f.write(f"==============================================\n")
-    f.write(f"Testing extreme examples of expansion factors\n")
+    f.write(f"Testing expansion factors\n")
     f.write(f"==============================================\n")
 # Extreme examples to test timing of training a model with different expansion factors
 for i in range(30, 41):
