@@ -266,7 +266,7 @@ def _load_data_shard(filename):
         assert header[1] == 1, "unsupported version"
         ntok = header[2] # number of tokens (claimed)
         # the rest of it are tokens, stored as uint16
-        tokens = np.frombuffer(f.read(300000), dtype=np.uint16)
+        tokens = np.frombuffer(f.read(600000), dtype=np.uint16)
     # assert len(tokens) == ntok, "number of tokens read does not match header?"
     return tokens
 
@@ -567,7 +567,7 @@ def function(validation_loss: float, training_time: float) -> float:
 # results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
 # Not logging individual test results for initial testing
 
-long_test_log = "/logs/function_testing.txt"
+long_test_log = "./logs/function_testing.txt"
 if master_process:
     with open(long_test_log, "w") as f:
         f.write(f"More graunuar testing with custom functionlog\n")
@@ -589,12 +589,12 @@ for i in [3.1, 3.5, 3.8, 4.0]:
             f.write(f"==============================================\n")
     args = Hyperparameters(expansion_factor=i, num_iterations=500, val_loss_every=50)
     results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=True, intermediate_log=long_test_log)
-    print(f"Test with expansion factor {x} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
+    print(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
 
     function_value = function(results['final_val_loss'], results['training_time_ms'])
-    print(f"Function value for expansion factor {x}: {function_value:.4f}")
+    print(f"Function value for expansion factor {i}: {function_value:.4f}")
     if master_process:
         with open(long_test_log, "a") as f:
             f.write(f"==============================================\n")
-            f.write(f"Test with expansion factor {x} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
-            f.write(f"Function value for expansion factor {x}: {function_value:.4f}\n")
+            f.write(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
+            f.write(f"Function value for expansion factor {i}: {function_value:.4f}\n")
