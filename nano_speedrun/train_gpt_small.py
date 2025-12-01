@@ -1,3 +1,4 @@
+# Script to train with a subset of the data and a subset of iterations for exploratory analysis
 # NOTE: record from https://github.com/KellerJordan/modded-nanogpt/blob/master/records/track_1_short/2024-10-14_ModernArch/dabaaddd-237c-4ec9-939d-6608a9ed5e27.txt
 import os
 import sys

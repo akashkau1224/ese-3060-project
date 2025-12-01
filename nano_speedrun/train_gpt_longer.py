@@ -1,4 +1,4 @@
-# Applying a custom function of the validation loss and training time to find the optimal expansion factor between 3.0 and 4.0
+# Training a model for 500 iterations and seeing how the function, validation loss, and training time change over time (every 50 epochs)
 # NOTE: record from https://github.com/KellerJordan/modded-nanogpt/blob/master/records/track_1_short/2024-10-14_ModernArch/dabaaddd-237c-4ec9-939d-6608a9ed5e27.txt
 import os
 import sys
@@ -345,7 +345,7 @@ class Hyperparameters:
 
 
 def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int, ddp_world_size: int, 
-                      master_process: bool, run_id: str = None, should_log: bool = True):
+                      master_process: bool, run_id: str = None, should_log: bool = True, intermediate_log: str = None):
     """
     Run a complete training and testing cycle.
     
@@ -446,7 +446,6 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
             training_time_ms = 0
             t0 = time.time()
         timed_steps = float('nan') if step <= 11 else (step - 10) + 1 # <= 11 to avoid bug in val
-
         # once in a while evaluate the validation dataset
         if (last_step or (args.val_loss_every > 0 and step % args.val_loss_every == 0)):
             # stop the clock
@@ -471,6 +470,11 @@ def run_training_test(args: Hyperparameters, ddp_rank: int, ddp_local_rank: int,
                 if last_step:
                     with open(logfile, "a") as f:
                         f.write(f'step:{step}/{args.num_iterations} val_loss:{val_loss:.4f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/(timed_steps-1):.2f}ms\n')
+            if master_process and intermediate_log:
+                with open(intermediate_log, "a") as f:
+                    f.write(f"Step {step} of {args.num_iterations} completed: training_time_ms={training_time_ms:.0f}ms\n")
+                    f.write(f"Val loss: {val_loss:.4f}\n")
+                    f.write(f"Function value: {function(val_loss, training_time_ms):.4f}\n")
             # start the clock again
             torch.cuda.synchronize()
             t0 = time.time()
@@ -563,9 +567,9 @@ def function(validation_loss: float, training_time: float) -> float:
 # results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
 # Not logging individual test results for initial testing
 
-initial_test_log = "/logs/function_testing.txt"
+long_test_log = "/logs/function_testing.txt"
 if master_process:
-    with open(initial_test_log, "w") as f:
+    with open(long_test_log, "w") as f:
         f.write(f"More graunuar testing with custom functionlog\n")
         f.write(f"==============================================\n")
         f.write(f"Running pytorch {torch.version.__version__} compiled for CUDA {torch.version.cuda}\nnvidia-smi:\n")
@@ -577,15 +581,20 @@ if master_process:
         f.write(f"Testing expansion factors\n")
         f.write(f"==============================================\n")
 # Extreme examples to test timing of training a model with different expansion factors
-for i in range(30, 41):
-    x = i / 10.0
-    args = Hyperparameters(expansion_factor=x)
-    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=True)
+for i in [3.1, 3.5, 3.8, 4.0]:
+    if master_process:
+        with open(long_test_log, "a") as f:
+            f.write(f"==============================================\n")
+            f.write(f"Testing expansion factor {i} with 500 iterations\n")
+            f.write(f"==============================================\n")
+    args = Hyperparameters(expansion_factor=i, num_iterations=500, val_loss_every=50)
+    results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=True, intermediate_log=long_test_log)
     print(f"Test with expansion factor {x} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
 
     function_value = function(results['final_val_loss'], results['training_time_ms'])
     print(f"Function value for expansion factor {x}: {function_value:.4f}")
     if master_process:
-        with open(initial_test_log, "a") as f:
+        with open(long_test_log, "a") as f:
+            f.write(f"==============================================\n")
             f.write(f"Test with expansion factor {x} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
             f.write(f"Function value for expansion factor {x}: {function_value:.4f}\n")

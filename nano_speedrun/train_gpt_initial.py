@@ -1,3 +1,4 @@
+# Initial script testing extreme expansion factors and seeing how robust 3.5 and 4.0 expansion factors are
 # NOTE: record from https://github.com/KellerJordan/modded-nanogpt/blob/master/records/track_1_short/2024-10-14_ModernArch/dabaaddd-237c-4ec9-939d-6608a9ed5e27.txt
 import os
 import sys
@@ -560,30 +561,34 @@ master_process = (ddp_rank == 0) # this process will do logging, checkpointing e
 # Not logging individual test results for initial testing
 
 initial_test_log = "/logs/initial_testing.txt"
-with open(initial_test_log, "w") as f:
-    f.write(f"Initial testing log\n")
-    f.write(f"==============================================\n")
-    f.write(f"Running pytorch {torch.version.__version__} compiled for CUDA {torch.version.cuda}\nnvidia-smi:\n")
-    import subprocess
-    result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    f.write(f'{result.stdout}\n')
-    f.write('='*100 + '\n\n')
-    f.write(f"==============================================\n")
-    f.write(f"Testing extreme examples of expansion factors\n")
-    f.write(f"==============================================\n")
+if master_process:
+    with open(initial_test_log, "w") as f:
+        f.write(f"Initial testing log\n")
+        f.write(f"==============================================\n")
+        f.write(f"Running pytorch {torch.version.__version__} compiled for CUDA {torch.version.cuda}\nnvidia-smi:\n")
+        import subprocess
+        result = subprocess.run(['nvidia-smi'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        f.write(f'{result.stdout}\n')
+        f.write('='*100 + '\n\n')
+        f.write(f"==============================================\n")
+        f.write(f"Testing extreme examples of expansion factors\n")
+        f.write(f"==============================================\n")
 # Extreme examples to test timing of training a model with different expansion factors
 for i in [1.5, 2.0, 2.5, 6.0, 7.0]:
     args = Hyperparameters(expansion_factor=i)
     results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process, should_log=False)
     print(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
+    
+    if master_process:
+        with open(initial_test_log, "a") as f:
+            f.write(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
+
+
+if master_process:
     with open(initial_test_log, "a") as f:
-        f.write(f"Test with expansion factor {i} completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
-
-
-with open(initial_test_log, "a") as f:
-    f.write(f"==============================================\n")
-    f.write(f"Testing expansion factor 3.5\n")
-    f.write(f"==============================================\n")
+        f.write(f"==============================================\n")
+        f.write(f"Testing expansion factor 3.5\n")
+        f.write(f"==============================================\n")
 
 # Testing for consistency of training time for 3.5 expansion factor vs 4.0 expansion factor
 total_time = 0
@@ -594,11 +599,13 @@ for i in range(5):
     total_time += results['training_time_ms']
     total_val_loss += results['final_val_loss']
     print(f"Test {i+1} with expansion factor 3.5 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
-    with open(initial_test_log, "a") as f:
-        f.write(f"Test {i+1} with expansion factor 3.5 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
+    if master_process:
+        with open(initial_test_log, "a") as f:
+            f.write(f"Test {i+1} with expansion factor 3.5 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
 print(f"3.5 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
-with open(initial_test_log, "a") as f:
-    f.write(f"3.5 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
+if master_process:
+    with open(initial_test_log, "a") as f:
+        f.write(f"3.5 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
 
 with open(initial_test_log, "a") as f:
     f.write(f"==============================================\n")
@@ -612,8 +619,10 @@ for i in range(5):
     total_time += results['training_time_ms']
     total_val_loss += results['final_val_loss']
     print(f"Test {i+1} with expansion factor 4.0 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms")
-    with open(initial_test_log, "a") as f:
-        f.write(f"Test {i+1} with expansion factor 4.0 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
+    if master_process:
+        with open(initial_test_log, "a") as f:
+            f.write(f"Test {i+1} with expansion factor 4.0 completed: final_val_loss={results['final_val_loss']:.4f}, training_time={results['training_time_ms']:.0f}ms\n")
 print(f"4.0 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
-with open(initial_test_log, "a") as f:
-    f.write(f"4.0 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
+if master_process:
+    with open(initial_test_log, "a") as f:
+        f.write(f"4.0 expansion factor averages; Time to train 100 iterations: {total_time/5:.0f}ms, Final validation loss: {total_val_loss/5:.4f }\n")
