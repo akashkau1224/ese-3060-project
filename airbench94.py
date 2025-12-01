@@ -11,6 +11,7 @@
 #            Setup/Hyperparameters          #
 #############################################
 
+import argparse
 import os
 import sys
 import uuid
@@ -345,10 +346,24 @@ def evaluate(model, loader, tta_level=0):
     return (logits.argmax(1) == loader.labels).float().mean().item()
 
 ############################################
+#            Argument Parsing             #
+############################################
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train with optional AGC')
+    parser.add_argument('--use_agc', action='store_true',
+                        help='Turn on adaptive gradient clipping')
+    parser.add_argument('--agc_clip_factor', type=float, default=10.0,
+                        help='Clip factor for adaptive gradient clipping')
+    parser.add_argument('--lr', type=float, default=None,
+                        help='Learning rate per 1024 examples')
+    return parser.parse_args()
+
+############################################
 #                Training                  #
 ############################################
 
-def main(run):
+def main(run, args=None):
 
     batch_size = hyp['opt']['batch_size']
     epochs = hyp['opt']['train_epochs']
@@ -358,7 +373,9 @@ def main(run):
     # learning rate by this ratio in order to ensure steps are the same scale as gradients, regardless
     # of the choice of momentum.
     kilostep_scale = 1024 * (1 + 1 / (1 - momentum))
-    lr = hyp['opt']['lr'] / kilostep_scale # un-decoupled learning rate for PyTorch SGD
+    # Use provided learning rate if available, otherwise use default from hyp
+    base_lr = args.lr if args is not None and args.lr is not None else hyp['opt']['lr']
+    lr = base_lr / kilostep_scale # un-decoupled learning rate for PyTorch SGD
     wd = hyp['opt']['weight_decay'] * batch_size / kilostep_scale
     lr_biases = lr * hyp['opt']['bias_scaler']
 
@@ -423,7 +440,8 @@ def main(run):
             loss = loss_fn(outputs, labels).sum()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
-            adaptive_gradient_clipping(model, clip_factor=10.0)
+            if args is not None and args.use_agc:
+                adaptive_gradient_clipping(model, clip_factor=args.agc_clip_factor)
             optimizer.step()
             scheduler.step()
 
@@ -503,17 +521,18 @@ def adaptive_gradient_clipping(model, clip_factor=10.0, eps=1e-3):
 
 
 if __name__ == "__main__":
+    args = parse_args()
+
     with open(sys.argv[0]) as f:
         code = f.read()
 
     print_columns(logging_columns_list, is_head=True)
-    #main('warmup')
-    results = [main(run) for run in range(25)]
+    results = [main(run, args) for run in range(25)]
     accs = torch.tensor([r[0] for r in results])
     times = torch.tensor([r[1] for r in results])
     print('Mean: %.4f Std: %.4f' % (accs.mean(), accs.std()))
-    # print('Time Mean: %.4f Time Std: %.4f' % (times[1:].mean(), times[1:].std()))
-    print('Time Mean: %.4f Time Std: %.4f' % (times.mean(), times.std()))
+    print('Time Mean: %.4f Time Std Without Outlier: %.4f' % (times[1:].mean(), times[1:].std()))
+    print('Time Mean: %.4f Time Std With Outlier: %.4f' % (times.mean(), times.std()))
 
     # log = {'code': code, 'accs': accs}
     # log_dir = os.path.join('logs', str(uuid.uuid4()))
