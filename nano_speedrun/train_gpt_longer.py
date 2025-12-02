@@ -266,8 +266,8 @@ def _load_data_shard(filename):
         assert header[1] == 1, "unsupported version"
         ntok = header[2] # number of tokens (claimed)
         # the rest of it are tokens, stored as uint16
-        tokens = np.frombuffer(f.read(600000), dtype=np.uint16)
-    # assert len(tokens) == ntok, "number of tokens read does not match header?"
+        tokens = np.frombuffer(f.read(), dtype=np.uint16)
+    assert len(tokens) == ntok, "number of tokens read does not match header?"
     return tokens
 
 class DistributedDataLoader:
