@@ -302,6 +302,37 @@ def print_training_details(variables, is_final_entry):
         formatted.append(res.rjust(len(col)))
     print_columns(formatted, is_final_entry=is_final_entry)
 
+def format_training_log_entry(entry):
+    formatted = []
+    for col in logging_columns_list:
+        key = col.strip()
+        var = entry.get(key, None)
+        if type(var) in (int, str):
+            res = str(var)
+        elif type(var) is float:
+            res = '{:0.4f}'.format(var)
+        else:
+            res = ''
+        formatted.append(res.rjust(len(col)))
+    return '|  ' + '  |  '.join(formatted) + '  |'
+
+def write_training_logs_to_file(f, all_training_logs):
+    header = '|  ' + '  |  '.join(logging_columns_list) + '  |'
+    separator = '-' * len(header)
+
+    for run_num, run_log in all_training_logs:
+        for i, entry in enumerate(run_log):
+            if i > 0:
+                entry_copy = entry.copy()
+                entry_copy['run'] = None
+                log_line = format_training_log_entry(entry_copy)
+            else:
+                entry['run'] = run_num
+                log_line = format_training_log_entry(entry)
+            f.write(log_line + '\n')
+            if entry.get('epoch') == 'eval':
+                f.write(separator + '\n\n')
+
 ############################################
 #               Evaluation                 #
 ############################################
@@ -363,7 +394,7 @@ def parse_args():
 #                Training                  #
 ############################################
 
-def main(run, args=None):
+def main(run, args=None, training_log=None):
 
     batch_size = hyp['opt']['batch_size']
     epochs = hyp['opt']['train_epochs']
@@ -389,6 +420,9 @@ def main(run, args=None):
 
     model = make_net()
     current_steps = 0
+
+    run_log = [] if training_log is not None else None
+    original_run = run
 
     norm_biases = [p for k, p in model.named_parameters() if 'norm' in k and p.requires_grad]
     other_params = [p for k, p in model.named_parameters() if 'norm' not in k and p.requires_grad]
@@ -468,7 +502,21 @@ def main(run, args=None):
         train_loss = loss.item() / batch_size
         val_acc = evaluate(model, test_loader, tta_level=0)
         print_training_details(locals(), is_final_entry=False)
-        run = None # Only print the run number once
+
+        if run_log is not None:
+            run_log.append({
+                'run': original_run,
+                'epoch': epoch,
+                'train_loss': train_loss,
+                'train_acc': train_acc,
+                'val_acc': val_acc,
+                'tta_val_acc': None,
+                'total_time_seconds': total_time_seconds
+            })
+        run = None
+
+        if val_acc >= 0.90:
+            break
 
     ####################
     #  TTA Evaluation  #
@@ -483,7 +531,18 @@ def main(run, args=None):
     epoch = 'eval'
     print_training_details(locals(), is_final_entry=True)
 
-    return tta_val_acc, total_time_seconds
+    if run_log is not None:
+        run_log.append({
+            'run': original_run,
+            'epoch': 'eval',
+            'train_loss': train_loss,
+            'train_acc': train_acc,
+            'val_acc': val_acc,
+            'tta_val_acc': tta_val_acc,
+            'total_time_seconds': total_time_seconds
+        })
+
+    return tta_val_acc, total_time_seconds, run_log
 
 
 ############################################
@@ -499,7 +558,6 @@ def unitwise_norm(t):
     t_flat = t.reshape(t.shape[0], -1)
     norms = t_flat.norm(dim=1, keepdim=True)
     return norms.reshape(-1, *([1] * (t.ndim - 1)))
-
 
 def adaptive_gradient_clipping(model, clip_factor=10.0, eps=1e-3):
     for name, param in model.named_parameters():
@@ -526,17 +584,43 @@ if __name__ == "__main__":
     with open(sys.argv[0]) as f:
         code = f.read()
 
+    use_agc = args.use_agc if args is not None else False
+    base_lr = args.lr if args is not None and args.lr is not None else hyp['opt']['lr']
+
     print_columns(logging_columns_list, is_head=True)
-    results = [main(run, args) for run in range(25)]
+    all_training_logs = []
+    results = []
+    for run in range(25):
+        tta_val_acc, total_time_seconds, run_log = main(run, args, training_log=True)
+        results.append((tta_val_acc, total_time_seconds))
+        if run_log is not None:
+            all_training_logs.append((run, run_log))
     accs = torch.tensor([r[0] for r in results])
     times = torch.tensor([r[1] for r in results])
-    print('Mean: %.4f Std: %.4f' % (accs.mean(), accs.std()))
-    print('Time Mean: %.4f Time Std Without Outlier: %.4f' % (times[1:].mean(), times[1:].std()))
-    print('Time Mean: %.4f Time Std With Outlier: %.4f' % (times.mean(), times.std()))
 
-    # log = {'code': code, 'accs': accs}
-    # log_dir = os.path.join('logs', str(uuid.uuid4()))
-    # os.makedirs(log_dir, exist_ok=True)
-    # log_path = os.path.join(log_dir, 'log.pt')
-    # print(os.path.abspath(log_path))
-    # torch.save(log, os.path.join(log_dir, 'log.pt'))
+    log_dir = 'logs'
+    os.makedirs(log_dir, exist_ok=True)
+    log_filename = os.path.join(log_dir, f'airbench94_log_{uuid.uuid4().hex[:8]}.txt')
+
+    with open(log_filename, 'w') as f:
+        f.write('='*80 + '\n')
+        f.write('Airbench94 Training Configuration Log\n')
+        f.write('='*80 + '\n\n')
+        f.write(f'AGC Used: {use_agc}\n')
+        if use_agc and args is not None:
+            f.write(f'AGC Clip Factor: {args.agc_clip_factor}\n')
+        f.write(f'Learning Rate (per 1024 examples): {base_lr}\n')
+        f.write(f'\nSummary Results:\n')
+        f.write(f'Mean Accuracy: {accs.mean():.4f}\n')
+        f.write(f'Std Accuracy: {accs.std():.4f}\n')
+        f.write(f'Time Mean: {times.mean():.4f} seconds\n')
+        f.write(f'Time Std: {times.std():.4f} seconds\n')
+        f.write('\n' + '='*80 + '\n\n')
+
+        # Write detailed training logs
+        f.write('Detailed Training Logs:\n')
+        f.write('='*80 + '\n\n')
+        write_training_logs_to_file(f, all_training_logs)
+        f.write('\n' + '='*80 + '\n')
+
+    print(f'\nLog saved to: {os.path.abspath(log_filename)}')
