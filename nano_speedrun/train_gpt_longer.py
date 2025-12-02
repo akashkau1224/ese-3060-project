@@ -567,10 +567,10 @@ def function(validation_loss: float, training_time: float) -> float:
 # results = run_training_test(args, ddp_rank, ddp_local_rank, ddp_world_size, master_process)
 # Not logging individual test results for initial testing
 
-long_test_log = "./logs/function_testing.txt"
+long_test_log = "./logs/long_testing.txt"
 if master_process:
     with open(long_test_log, "w") as f:
-        f.write(f"More graunuar testing with custom functionlog\n")
+        f.write(f"Testing more iterations for promising expansion factors\n")
         f.write(f"==============================================\n")
         f.write(f"Running pytorch {torch.version.__version__} compiled for CUDA {torch.version.cuda}\nnvidia-smi:\n")
         import subprocess

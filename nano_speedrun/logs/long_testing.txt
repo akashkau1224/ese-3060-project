@@ -1,0 +1,197 @@
+Testing more iterations for promising expansion factors
+==============================================
+Running pytorch 2.8.0+cu128 compiled for CUDA 12.8
+nvidia-smi:
+Tue Dec  2 20:15:44 2025
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.127.08             Driver Version: 550.127.08     CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L40                     On  |   00000000:01:00.0 Off |                    0 |
+| N/A   25C    P0             63W /  300W |     433MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA L40                     On  |   00000000:A1:00.0 Off |                    0 |
+| N/A   25C    P0             66W /  300W |     433MiB /  46068MiB |      1%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA L40                     On  |   00000000:C1:00.0 Off |                    0 |
+| N/A   25C    P0             60W /  300W |     433MiB /  46068MiB |      2%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA L40                     On  |   00000000:E1:00.0 Off |                    0 |
+| N/A   25C    P0             67W /  300W |     433MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
++-----------------------------------------------------------------------------------------+
+
+====================================================================================================
+
+==============================================
+Testing expansion factors
+==============================================
+==============================================
+Testing expansion factor 3.1 with 500 iterations
+==============================================
+Step 0 of 500 completed: training_time_ms=373ms
+Val loss: 16.0249
+Function value: 2.8843
+Step 50 of 500 completed: training_time_ms=89991ms
+Val loss: 6.0763
+Function value: 2.1405
+Step 100 of 500 completed: training_time_ms=203160ms
+Val loss: 5.5282
+Function value: 2.0778
+Step 150 of 500 completed: training_time_ms=315766ms
+Val loss: 5.1318
+Function value: 2.0214
+Step 200 of 500 completed: training_time_ms=427702ms
+Val loss: 4.8780
+Function value: 1.9831
+Step 250 of 500 completed: training_time_ms=541090ms
+Val loss: 4.6970
+Function value: 1.9548
+Step 300 of 500 completed: training_time_ms=654163ms
+Val loss: 4.5532
+Function value: 1.9315
+Step 350 of 500 completed: training_time_ms=764040ms
+Val loss: 4.4313
+Function value: 1.9107
+Step 400 of 500 completed: training_time_ms=874623ms
+Val loss: 4.3423
+Function value: 1.8959
+Step 450 of 500 completed: training_time_ms=986217ms
+Val loss: 4.2890
+Function value: 1.8881
+Step 500 of 500 completed: training_time_ms=1099112ms
+Val loss: 4.2686
+Function value: 1.8874
+==============================================
+Test with expansion factor 3.1 completed: final_val_loss=4.2686, training_time=1099112ms
+Function value for expansion factor 3.1: 1.8874
+==============================================
+Testing expansion factor 3.5 with 500 iterations
+==============================================
+Step 0 of 500 completed: training_time_ms=442ms
+Val loss: 15.9990
+Function value: 2.8887
+Step 50 of 500 completed: training_time_ms=92682ms
+Val loss: 6.0637
+Function value: 2.1395
+Step 100 of 500 completed: training_time_ms=210035ms
+Val loss: 5.5120
+Function value: 2.0761
+Step 150 of 500 completed: training_time_ms=326693ms
+Val loss: 5.1189
+Function value: 2.0202
+Step 200 of 500 completed: training_time_ms=446099ms
+Val loss: 4.8633
+Function value: 1.9816
+Step 250 of 500 completed: training_time_ms=563047ms
+Val loss: 4.6843
+Function value: 1.9536
+Step 300 of 500 completed: training_time_ms=679217ms
+Val loss: 4.5419
+Function value: 1.9304
+Step 350 of 500 completed: training_time_ms=796655ms
+Val loss: 4.4219
+Function value: 1.9101
+Step 400 of 500 completed: training_time_ms=915147ms
+Val loss: 4.3342
+Function value: 1.8957
+Step 450 of 500 completed: training_time_ms=1032298ms
+Val loss: 4.2820
+Function value: 1.8882
+Step 500 of 500 completed: training_time_ms=1148253ms
+Val loss: 4.2618
+Function value: 1.8873
+==============================================
+Test with expansion factor 3.5 completed: final_val_loss=4.2618, training_time=1148253ms
+Function value for expansion factor 3.5: 1.8873
+==============================================
+Testing expansion factor 3.8 with 500 iterations
+==============================================
+Step 0 of 500 completed: training_time_ms=423ms
+Val loss: 16.0266
+Function value: 2.8888
+Step 50 of 500 completed: training_time_ms=97732ms
+Val loss: 6.0476
+Function value: 2.1388
+Step 100 of 500 completed: training_time_ms=218152ms
+Val loss: 5.4982
+Function value: 2.0750
+Step 150 of 500 completed: training_time_ms=338263ms
+Val loss: 5.1000
+Function value: 2.0178
+Step 200 of 500 completed: training_time_ms=460197ms
+Val loss: 4.8505
+Function value: 1.9802
+Step 250 of 500 completed: training_time_ms=581890ms
+Val loss: 4.6718
+Function value: 1.9522
+Step 300 of 500 completed: training_time_ms=702925ms
+Val loss: 4.5339
+Function value: 1.9299
+Step 350 of 500 completed: training_time_ms=824134ms
+Val loss: 4.4193
+Function value: 1.9107
+Step 400 of 500 completed: training_time_ms=946523ms
+Val loss: 4.3328
+Function value: 1.8965
+Step 450 of 500 completed: training_time_ms=1067419ms
+Val loss: 4.2804
+Function value: 1.8890
+Step 500 of 500 completed: training_time_ms=1189169ms
+Val loss: 4.2600
+Function value: 1.8881
+==============================================
+Test with expansion factor 3.8 completed: final_val_loss=4.2600, training_time=1189169ms
+Function value for expansion factor 3.8: 1.8881
+==============================================
+Testing expansion factor 4.0 with 500 iterations
+==============================================
+Step 0 of 500 completed: training_time_ms=395ms
+Val loss: 16.0237
+Function value: 2.8863
+Step 50 of 500 completed: training_time_ms=97429ms
+Val loss: 6.0534
+Function value: 2.1396
+Step 100 of 500 completed: training_time_ms=219231ms
+Val loss: 5.5030
+Function value: 2.0760
+Step 150 of 500 completed: training_time_ms=341376ms
+Val loss: 5.1052
+Function value: 2.0191
+Step 200 of 500 completed: training_time_ms=464368ms
+Val loss: 4.8551
+Function value: 1.9814
+Step 250 of 500 completed: training_time_ms=586958ms
+Val loss: 4.6729
+Function value: 1.9527
+Step 300 of 500 completed: training_time_ms=710029ms
+Val loss: 4.5300
+Function value: 1.9294
+Step 350 of 500 completed: training_time_ms=831900ms
+Val loss: 4.4114
+Function value: 1.9094
+Step 400 of 500 completed: training_time_ms=954276ms
+Val loss: 4.3258
+Function value: 1.8952
+Step 450 of 500 completed: training_time_ms=1077303ms
+Val loss: 4.2744
+Function value: 1.8880
+Step 500 of 500 completed: training_time_ms=1199319ms
+Val loss: 4.2543
+Function value: 1.8872
+==============================================
+Test with expansion factor 4.0 completed: final_val_loss=4.2543, training_time=1199319ms
+Function value for expansion factor 4.0: 1.8872
