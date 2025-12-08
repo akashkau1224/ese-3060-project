@@ -1,5 +1,7 @@
 # CIFAR-10 Training with Airbench94
 
+### FOR MORE DETAIL ABOUT THE LOGS GO TO THE LOG_FORMAT_APPENDIX.MD
+
 ## Files
 
 - **`airbench94.py`**: Main training script. Trains ResNet on CIFAR-10 for 25 runs with optional AGC and custom learning rates.

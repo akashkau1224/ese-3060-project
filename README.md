@@ -1,5 +1,8 @@
 # ESE 3060 Final Project Fall 2025
 
+## /cifar10-src contains all the information about part one of the project see the README there for more information
+## /nano_speedrun contains all the information about part two of the project see the README there for more information
+
 ## Project Overview
 This project contains two machine learning training benchmarks:
 - **airbench94.py**: CIFAR-10 image classification benchmark
